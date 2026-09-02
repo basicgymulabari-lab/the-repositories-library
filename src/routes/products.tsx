@@ -47,6 +47,9 @@ import type { GymState, PaymentMethod, Product, ProductCategory, Sale } from "@/
 function saleInvoice(state: GymState, sale: Sale): InvoiceData {
   const member = sale.memberId ? state.members.find((m) => m.id === sale.memberId) : undefined;
   const walkIn = !member || isWalkIn(member);
+  const initialPayment = [...state.payments]
+    .filter((payment) => payment.saleId === sale.id)
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
   return {
     invoiceNo: sale.invoiceNo,
     date: sale.date,
@@ -60,7 +63,7 @@ function saleInvoice(state: GymState, sale: Sale): InvoiceData {
     lines: [{ description: sale.productName, qty: sale.qty, rate: sale.unitPrice }],
     discount: sale.discount ?? 0,
     paid: salePaid(state, sale),
-    method: "cash",
+    method: initialPayment?.method,
   };
 }
 
@@ -665,7 +668,7 @@ function CollectSaleBalanceDialog({ sale, onClose }: { sale: Sale | null; onClos
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {(["cash", "card", "bank", "cheque", "other"] as const).map((item) => (
+                {(["cash", "upi", "card", "bank", "cheque", "other"] as const).map((item) => (
                   <SelectItem key={item} value={item} className="capitalize">
                     {item}
                   </SelectItem>
@@ -872,6 +875,7 @@ function SellDialog({ product, onClose }: { product: Product | null; onClose: ()
   const [walkAddress, setWalkAddress] = useState("");
   const [buyerQuery, setBuyerQuery] = useState("");
   const [paid, setPaid] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<"cash" | "upi" | "card">("cash");
 
   if (!state || !product) return null;
   const cur = state.settings.currency;
@@ -921,6 +925,7 @@ function SellDialog({ product, onClose }: { product: Product | null; onClose: ()
     setWalkPhone("");
     setWalkEmail("");
     setWalkAddress("");
+    setPaymentMethod("cash");
   };
 
   return (
@@ -1101,6 +1106,23 @@ function SellDialog({ product, onClose }: { product: Product | null; onClose: ()
               </p>
             ) : null}
           </div>
+          <div className="space-y-2">
+            <Label>Payment method</Label>
+            <Select
+              value={paymentMethod}
+              onValueChange={(value) => setPaymentMethod(value as "cash" | "upi" | "card")}
+              disabled={paidValid && paidNum === 0}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="cash">Cash</SelectItem>
+                <SelectItem value="upi">UPI</SelectItem>
+                <SelectItem value="card">Card</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <div className="flex justify-end gap-2">
             <Button variant="secondary" onClick={onClose}>
               Cancel
@@ -1121,6 +1143,7 @@ function SellDialog({ product, onClose }: { product: Product | null; onClose: ()
                   {
                     discount: discountAmount,
                     amountPaid: paidNum,
+                    paymentMethod,
                     buyerPhone: member?.phone ?? (walkPhone.trim() || undefined),
                     buyerEmail: member?.email ?? (walkEmail.trim() || undefined),
                     buyerAddress: member?.address ?? (walkAddress.trim() || undefined),

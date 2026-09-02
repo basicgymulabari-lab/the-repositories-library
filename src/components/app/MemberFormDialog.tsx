@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { addMember, updateMember, useGym } from "@/lib/gym/store";
-import type { Member } from "@/lib/gym/types";
+import type { Member, PaymentMethod } from "@/lib/gym/types";
 import { isWalkIn } from "@/lib/gym/selectors";
 
 type FormState = {
@@ -40,6 +40,7 @@ type FormState = {
   discountType: "none" | "percent" | "fixed";
   discountValue: string;
   paidNow: string;
+  paymentMethod: Extract<PaymentMethod, "cash" | "upi" | "card">;
 };
 
 const empty: FormState = {
@@ -56,6 +57,7 @@ const empty: FormState = {
   discountType: "none",
   discountValue: "",
   paidNow: "",
+  paymentMethod: "cash",
 };
 
 export function MemberFormDialog({
@@ -116,6 +118,7 @@ export function MemberFormDialog({
             discountType: "none",
             discountValue: "",
             paidNow: "",
+            paymentMethod: "cash",
           }
         : {
             ...empty,
@@ -432,6 +435,7 @@ export function MemberFormDialog({
         joiningFee,
         discount: form.planId ? discountAmount : 0,
         paidNow: Math.min(Number(form.paidNow || 0), form.planId ? finalPrice : 0),
+        paymentMethod: form.paymentMethod,
       });
       toast.success(`${payload.name} added to the roster`);
     }
@@ -465,7 +469,12 @@ export function MemberFormDialog({
         <form onSubmit={submit} className="space-y-5">
           {!member && (
             <div className="grid grid-cols-2 gap-2 text-xs font-medium">
-              <div
+              <button
+                type="button"
+                onClick={() => {
+                  setMembershipStepReady(false);
+                  setStep(1);
+                }}
                 className={`rounded-full border px-3 py-2 text-center ${
                   step === 1
                     ? "border-gold/50 bg-gold/15 text-gold"
@@ -473,8 +482,10 @@ export function MemberFormDialog({
                 }`}
               >
                 1. Personal details
-              </div>
-              <div
+              </button>
+              <button
+                type="button"
+                onClick={advanceToMembership}
                 className={`rounded-full border px-3 py-2 text-center ${
                   step === 2
                     ? "border-gold/50 bg-gold/15 text-gold"
@@ -482,7 +493,7 @@ export function MemberFormDialog({
                 }`}
               >
                 2. Membership details
-              </div>
+              </button>
             </div>
           )}
 
@@ -755,6 +766,23 @@ export function MemberFormDialog({
                   onChange={(e) => set("paidNow", e.target.value)}
                   placeholder="0"
                 />
+              </Field>
+              <Field label="Payment method">
+                <Select
+                  value={form.paymentMethod}
+                  onValueChange={(value) =>
+                    set("paymentMethod", value as Extract<PaymentMethod, "cash" | "upi" | "card">)
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cash">Cash</SelectItem>
+                    <SelectItem value="upi">UPI</SelectItem>
+                    <SelectItem value="card">Card</SelectItem>
+                  </SelectContent>
+                </Select>
               </Field>
             </div>
           )}

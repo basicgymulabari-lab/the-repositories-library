@@ -457,7 +457,12 @@ function MemberProfile() {
                                       ],
                                       discount: s.discount ?? 0,
                                       paid,
-                                      method: "cash",
+                                      method: [...state.payments]
+                                        .filter((payment) => payment.saleId === s.id)
+                                        .sort(
+                                          (a, b) =>
+                                            new Date(a.date).getTime() - new Date(b.date).getTime(),
+                                        )[0]?.method,
                                     })
                                   }
                                 >
@@ -726,10 +731,11 @@ function CollectBalanceDialog({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="cash">Cash</SelectItem>
+                <SelectItem value="upi">UPI</SelectItem>
                 <SelectItem value="card">Card</SelectItem>
                 <SelectItem value="bank">Bank transfer</SelectItem>
                 <SelectItem value="cheque">Cheque</SelectItem>
-                <SelectItem value="other">Other / UPI</SelectItem>
+                <SelectItem value="other">Other</SelectItem>
               </SelectContent>
             </Select>
           </div>

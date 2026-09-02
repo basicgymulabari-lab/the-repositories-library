@@ -87,7 +87,7 @@ const CATEGORIES: ExpenseCategory[] = [
   "Other",
 ];
 
-const METHODS: PaymentMethod[] = ["cash", "card", "bank", "cheque", "other"];
+const METHODS: PaymentMethod[] = ["cash", "upi", "card", "bank", "cheque", "other"];
 const RANGES: Range[] = ["daily", "weekly", "monthly", "yearly"];
 const RANGE_LABEL: Record<Range, string> = {
   daily: "Today",

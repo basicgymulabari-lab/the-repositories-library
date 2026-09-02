@@ -7,6 +7,7 @@ import type {
   Member,
   Membership,
   Payment,
+  PaymentMethod,
   Plan,
   Product,
   Sale,
@@ -197,6 +198,7 @@ export type NewMemberInput = Omit<
   paidNow?: number;
   discount?: number;
   joiningFee?: number;
+  paymentMethod?: PaymentMethod;
 };
 
 export function addMember(input: NewMemberInput) {
@@ -252,7 +254,7 @@ export function addMember(input: NewMemberInput) {
             membershipId: membership.id,
             kind: "membership",
             amount: paidNow,
-            method: "cash",
+            method: input.paymentMethod ?? "cash",
             date: iso(new Date()),
             note: `${plan.name} — joining payment`,
           };
@@ -731,6 +733,7 @@ export function sellProduct(
     buyerAddress?: string;
     /** Amount collected now; defaults to the full payable total. */
     amountPaid?: number;
+    paymentMethod?: PaymentMethod;
   },
 ) {
   setState((st) => {
@@ -827,7 +830,7 @@ export function sellProduct(
                 memberId: saleMemberId,
                 kind: "product" as const,
                 amount: paid,
-                method: "cash" as const,
+                method: extra?.paymentMethod ?? "cash",
                 date: sale.date,
                 note: `${product.name} × ${qty}`,
               },

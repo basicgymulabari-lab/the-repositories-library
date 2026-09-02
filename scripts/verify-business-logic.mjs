@@ -115,6 +115,7 @@ try {
     joiningFee: 750,
     discount: 100,
     paidNow: 500,
+    paymentMethod: "upi",
   });
   state = store.getState();
   assert.equal(state.members.length, memberCount + 1);
@@ -124,6 +125,10 @@ try {
 
   const membership = selectors.currentMembership(state, testMember.id);
   assert(membership);
+  assert.equal(
+    state.payments.find((payment) => payment.membershipId === membership.id)?.method,
+    "upi",
+  );
   store.addPayment({
     memberId: testMember.id,
     membershipId: membership.id,
@@ -170,10 +175,12 @@ try {
   store.sellProduct(product.id, 2, testMember.name, testMember.id, {
     discount: 50,
     amountPaid: 100,
+    paymentMethod: "card",
   });
   state = store.getState();
   assert.equal(state.products.find((item) => item.id === product.id).stock, stockBefore - 2);
   const sale = state.sales[0];
+  assert.equal(state.payments.find((payment) => payment.saleId === sale.id)?.method, "card");
   assert.equal(selectors.saleDue(state, sale), sale.total - 100);
   assert.equal(
     selectors.profitOfSales({ ...state, sales: [sale] }),

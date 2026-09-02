@@ -69,7 +69,7 @@ export type Membership = {
   createdAt: string;
 };
 
-export type PaymentMethod = "cash" | "card" | "bank" | "cheque" | "other";
+export type PaymentMethod = "cash" | "upi" | "card" | "bank" | "cheque" | "other";
 
 export type Payment = {
   id: ID;

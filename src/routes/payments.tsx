@@ -424,7 +424,7 @@ function PaymentDialog({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {(["cash", "card", "bank", "cheque", "other"] as const).map((m) => (
+                  {(["cash", "upi", "card", "bank", "cheque", "other"] as const).map((m) => (
                     <SelectItem key={m} value={m} className="capitalize">
                       {m}
                     </SelectItem>
