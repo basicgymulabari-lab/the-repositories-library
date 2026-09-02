@@ -44,6 +44,8 @@ export type Plan = {
   id: ID;
   name: string;
   price: number;
+  /** Default one-time joining fee used when registering a new member. */
+  joiningFee?: number;
   durationDays: number;
   description: string;
   active: boolean;
@@ -60,6 +62,8 @@ export type Membership = {
   endDate: string;
   price: number;
   discount: number;
+  /** Joining fee charged for this specific membership term. */
+  joiningFee?: number;
   frozen: boolean;
   frozenAt?: string | null;
   createdAt: string;

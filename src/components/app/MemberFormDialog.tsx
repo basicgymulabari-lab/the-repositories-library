@@ -34,6 +34,7 @@ type FormState = {
   emergencyContact: string;
   photo: string | null;
   planId: string;
+  joiningFee: string;
   discountType: "none" | "percent" | "fixed";
   discountValue: string;
   paidNow: string;
@@ -49,6 +50,7 @@ const empty: FormState = {
   emergencyContact: "",
   photo: null,
   planId: "",
+  joiningFee: "1000",
   discountType: "none",
   discountValue: "",
   paidNow: "",
@@ -65,6 +67,7 @@ export function MemberFormDialog({
 }) {
   const state = useGym();
   const [form, setForm] = useState<FormState>(empty);
+  const [step, setStep] = useState<1 | 2>(1);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [cameraOpen, setCameraOpen] = useState(false);
   const [cameraError, setCameraError] = useState("");
@@ -81,6 +84,8 @@ export function MemberFormDialog({
   useEffect(() => {
     if (!open) return;
     setErrors({});
+    setStep(1);
+    const firstPlan = state?.plans.find((p) => !p.deletedAt);
     setForm(
       member
         ? {
@@ -93,11 +98,16 @@ export function MemberFormDialog({
             emergencyContact: member.emergencyContact,
             photo: member.photo ?? null,
             planId: "",
+            joiningFee: "",
             discountType: "none",
             discountValue: "",
             paidNow: "",
           }
-        : { ...empty, planId: state?.plans.filter((p) => !p.deletedAt)[0]?.id ?? "" },
+        : {
+            ...empty,
+            planId: firstPlan?.id ?? "",
+            joiningFee: String(firstPlan?.joiningFee ?? 1000),
+          },
     );
   }, [open, member, state]);
 
@@ -161,7 +171,9 @@ export function MemberFormDialog({
         ? (originalPrice * (Number(form.discountValue) || 0)) / 100
         : Number(form.discountValue) || 0;
   const discountAmount = Math.min(Math.max(0, Math.round(rawDiscount)), originalPrice);
-  const finalPrice = originalPrice - discountAmount;
+  const joiningFeeNum = Number(form.joiningFee);
+  const joiningFee = Number.isFinite(joiningFeeNum) ? Math.max(0, Math.round(joiningFeeNum)) : 0;
+  const finalPrice = originalPrice - discountAmount + joiningFee;
   const paidNowNum = Number(form.paidNow || 0);
   const remainingBalance = Math.max(0, finalPrice - (Number.isFinite(paidNowNum) ? paidNowNum : 0));
   const cur = state.settings.currency;
@@ -186,7 +198,14 @@ export function MemberFormDialog({
       livePaidError = "Amount paid cannot exceed the final payable amount.";
   }
 
-  const validate = () => {
+  let liveJoiningFeeError = "";
+  if (!member) {
+    if (form.joiningFee === "" || !Number.isFinite(Number(form.joiningFee)))
+      liveJoiningFeeError = "Enter a valid joining fee.";
+    else if (Number(form.joiningFee) < 0) liveJoiningFeeError = "Joining fee cannot be negative.";
+  }
+
+  const personalErrors = () => {
     const e: Record<string, string> = {};
     if (form.name.trim().length < 2) e.name = "Name must be at least 2 characters.";
     if (form.name.trim().length > 80) e.name = "Name is too long.";
@@ -196,6 +215,19 @@ export function MemberFormDialog({
     if (!editingWalkIn && !form.dob) e.dob = "Date of birth is required.";
     else if (new Date(form.dob) > new Date()) e.dob = "Date of birth cannot be in the future.";
     if (form.address.trim().length > 200) e.address = "Address is too long.";
+    return e;
+  };
+
+  const validatePersonal = () => {
+    const e = personalErrors();
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
+  const validate = () => {
+    const e = personalErrors();
+    if (!member && !form.planId) e.planId = "Select a membership plan.";
+    if (liveJoiningFeeError) e.joiningFee = liveJoiningFeeError;
     if (liveDiscountError) e.discount = liveDiscountError;
     if (livePaidError) e.paidNow = livePaidError;
     setErrors(e);
@@ -335,6 +367,10 @@ export function MemberFormDialog({
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!member && step === 1) {
+      if (validatePersonal()) setStep(2);
+      return;
+    }
     if (!validate()) return;
     const payload = {
       name: form.name.trim(),
@@ -353,6 +389,7 @@ export function MemberFormDialog({
       addMember({
         ...payload,
         planId: form.planId || undefined,
+        joiningFee,
         discount: form.planId ? discountAmount : 0,
         paidNow: Math.min(Number(form.paidNow || 0), form.planId ? finalPrice : 0),
       });
@@ -373,124 +410,167 @@ export function MemberFormDialog({
               ? "Update this customer's basic contact information."
               : member
                 ? "Update contact details and personal information."
-                : "Register a new member and optionally start their first membership."}
+                : step === 1
+                  ? "Enter the member's personal and contact details."
+                  : "Choose the membership plan and confirm the joining payment."}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={submit} className="space-y-5">
-          {!editingWalkIn && (
-            <div className="flex items-center gap-4">
-              <div className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-2xl border border-gold/30 bg-secondary text-gold">
-                {form.photo ? (
-                  <img src={form.photo} alt="Member" className="h-full w-full object-cover" />
-                ) : (
-                  <span className="font-display text-xl">
-                    {(form.name || "?").slice(0, 2).toUpperCase()}
-                  </span>
-                )}
+          {!member && (
+            <div className="grid grid-cols-2 gap-2 text-xs font-medium">
+              <div
+                className={`rounded-full border px-3 py-2 text-center ${
+                  step === 1
+                    ? "border-gold/50 bg-gold/15 text-gold"
+                    : "border-border text-muted-foreground"
+                }`}
+              >
+                1. Personal details
               </div>
-              <div>
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => {
-                    onFile(e.target.files?.[0]);
-                    e.target.value = "";
-                  }}
-                />
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => fileRef.current?.click()}
-                  >
-                    <Upload className="mr-2 h-4 w-4" /> Upload photo
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => setCameraOpen(true)}
-                  >
-                    <Camera className="mr-2 h-4 w-4" /> Capture photo
-                  </Button>
-                </div>
-                <p className="mt-1 text-xs text-muted-foreground">Stored locally, max 2MB.</p>
+              <div
+                className={`rounded-full border px-3 py-2 text-center ${
+                  step === 2
+                    ? "border-gold/50 bg-gold/15 text-gold"
+                    : "border-border text-muted-foreground"
+                }`}
+              >
+                2. Membership details
               </div>
             </div>
           )}
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Full name" error={errors.name}>
-              <Input
-                value={form.name}
-                onChange={(e) => set("name", e.target.value)}
-                maxLength={80}
-              />
-            </Field>
-            <Field label="Phone" error={errors.phone}>
-              <Input
-                value={form.phone}
-                onChange={(e) => set("phone", e.target.value)}
-                maxLength={20}
-              />
-            </Field>
-            <Field label="Email" error={errors.email}>
-              <Input
-                value={form.email}
-                onChange={(e) => set("email", e.target.value)}
-                maxLength={120}
-              />
-            </Field>
-            {!editingWalkIn && (
-              <Field label="Date of birth" error={errors.dob}>
-                <Input type="date" value={form.dob} onChange={(e) => set("dob", e.target.value)} />
-              </Field>
-            )}
-            {!editingWalkIn && (
-              <Field label="Gender">
-                <Select
-                  value={form.gender}
-                  onValueChange={(v) => set("gender", v as Member["gender"])}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="male">Male</SelectItem>
-                    <SelectItem value="female">Female</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </Field>
-            )}
-            {!editingWalkIn && (
-              <Field label="Emergency contact">
-                <Input
-                  value={form.emergencyContact}
-                  onChange={(e) => set("emergencyContact", e.target.value)}
-                  maxLength={20}
+          {(member || step === 1) && (
+            <>
+              {!editingWalkIn && (
+                <div className="flex items-center gap-4">
+                  <div className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-2xl border border-gold/30 bg-secondary text-gold">
+                    {form.photo ? (
+                      <img src={form.photo} alt="Member" className="h-full w-full object-cover" />
+                    ) : (
+                      <span className="font-display text-xl">
+                        {(form.name || "?").slice(0, 2).toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                  <div>
+                    <input
+                      ref={fileRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        onFile(e.target.files?.[0]);
+                        e.target.value = "";
+                      }}
+                    />
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => fileRef.current?.click()}
+                      >
+                        <Upload className="mr-2 h-4 w-4" /> Upload photo
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => setCameraOpen(true)}
+                      >
+                        <Camera className="mr-2 h-4 w-4" /> Capture photo
+                      </Button>
+                    </div>
+                    <p className="mt-1 text-xs text-muted-foreground">Stored locally, max 2MB.</p>
+                  </div>
+                </div>
+              )}
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Full name" error={errors.name}>
+                  <Input
+                    value={form.name}
+                    onChange={(e) => set("name", e.target.value)}
+                    maxLength={80}
+                  />
+                </Field>
+                <Field label="Phone" error={errors.phone}>
+                  <Input
+                    value={form.phone}
+                    onChange={(e) => set("phone", e.target.value)}
+                    maxLength={20}
+                  />
+                </Field>
+                <Field label="Email" error={errors.email}>
+                  <Input
+                    value={form.email}
+                    onChange={(e) => set("email", e.target.value)}
+                    maxLength={120}
+                  />
+                </Field>
+                {!editingWalkIn && (
+                  <Field label="Date of birth" error={errors.dob}>
+                    <Input
+                      type="date"
+                      value={form.dob}
+                      onChange={(e) => set("dob", e.target.value)}
+                    />
+                  </Field>
+                )}
+                {!editingWalkIn && (
+                  <Field label="Gender">
+                    <Select
+                      value={form.gender}
+                      onValueChange={(v) => set("gender", v as Member["gender"])}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="male">Male</SelectItem>
+                        <SelectItem value="female">Female</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                )}
+                {!editingWalkIn && (
+                  <Field label="Emergency contact">
+                    <Input
+                      value={form.emergencyContact}
+                      onChange={(e) => set("emergencyContact", e.target.value)}
+                      maxLength={20}
+                    />
+                  </Field>
+                )}
+              </div>
+
+              <Field label="Address" error={errors.address}>
+                <Textarea
+                  rows={2}
+                  value={form.address}
+                  onChange={(e) => set("address", e.target.value)}
+                  maxLength={200}
                 />
               </Field>
-            )}
-          </div>
+            </>
+          )}
 
-          <Field label="Address" error={errors.address}>
-            <Textarea
-              rows={2}
-              value={form.address}
-              onChange={(e) => set("address", e.target.value)}
-              maxLength={200}
-            />
-          </Field>
-
-          {!member && (
+          {!member && step === 2 && (
             <div className="grid gap-4 rounded-xl border border-gold/25 bg-secondary/30 p-4 sm:grid-cols-2">
-              <Field label="Membership plan">
-                <Select value={form.planId} onValueChange={(v) => set("planId", v)}>
+              <Field label="Membership plan" error={errors.planId}>
+                <Select
+                  value={form.planId}
+                  onValueChange={(v) => {
+                    const plan = state.plans.find((item) => item.id === v);
+                    setForm((current) => ({
+                      ...current,
+                      planId: v,
+                      joiningFee: String(plan?.joiningFee ?? 1000),
+                    }));
+                  }}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select a plan" />
                   </SelectTrigger>
@@ -505,6 +585,18 @@ export function MemberFormDialog({
                       ))}
                   </SelectContent>
                 </Select>
+              </Field>
+              <Field
+                label={`Joining fee (${cur})`}
+                error={liveJoiningFeeError || errors.joiningFee}
+              >
+                <Input
+                  type="number"
+                  min={0}
+                  step="1"
+                  value={form.joiningFee}
+                  onChange={(e) => set("joiningFee", e.target.value)}
+                />
               </Field>
               <Field label="Discount type">
                 <Select
@@ -552,6 +644,13 @@ export function MemberFormDialog({
                       {discountAmount.toLocaleString("en-IN")}
                     </span>
                   </div>
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>Joining fee</span>
+                    <span className="text-foreground">
+                      + {cur}
+                      {joiningFee.toLocaleString("en-IN")}
+                    </span>
+                  </div>
                   <div className="flex justify-between font-semibold">
                     <span>Final payable</span>
                     <span className="text-gold">
@@ -586,7 +685,23 @@ export function MemberFormDialog({
             <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit">{member ? "Save changes" : "Add member"}</Button>
+            {!member && step === 2 && (
+              <Button type="button" variant="secondary" onClick={() => setStep(1)}>
+                Back
+              </Button>
+            )}
+            {!member && step === 1 ? (
+              <Button
+                type="button"
+                onClick={() => {
+                  if (validatePersonal()) setStep(2);
+                }}
+              >
+                Next
+              </Button>
+            ) : (
+              <Button type="submit">{member ? "Save changes" : "Add member"}</Button>
+            )}
           </div>
         </form>
 

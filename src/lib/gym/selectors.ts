@@ -90,10 +90,14 @@ export function paidFor(s: GymState, membershipId: string) {
     .reduce((sum, p) => sum + p.amount, 0);
 }
 
+export function membershipPayable(membership: Membership) {
+  return membership.price - membership.discount + (membership.joiningFee ?? 0);
+}
+
 export function dueFor(s: GymState, memberId: string) {
   return s.memberships
     .filter((m) => m.memberId === memberId)
-    .reduce((sum, m) => sum + Math.max(0, m.price - m.discount - paidFor(s, m.id)), 0);
+    .reduce((sum, m) => sum + Math.max(0, membershipPayable(m) - paidFor(s, m.id)), 0);
 }
 
 export function productDueFor(s: GymState, memberId: string) {

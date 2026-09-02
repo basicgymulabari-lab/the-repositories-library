@@ -190,7 +190,14 @@ function nextInvoice(st: GymState): [GymState, string] {
 export type NewMemberInput = Omit<
   Member,
   "id" | "notes" | "measurements" | "deletedAt" | "deletedBy" | "joinDate"
-> & { joinDate?: string; planId?: string; startDate?: string; paidNow?: number; discount?: number };
+> & {
+  joinDate?: string;
+  planId?: string;
+  startDate?: string;
+  paidNow?: number;
+  discount?: number;
+  joiningFee?: number;
+};
 
 export function addMember(input: NewMemberInput) {
   setState((st) => {
@@ -229,11 +236,12 @@ export function addMember(input: NewMemberInput) {
           endDate: iso(end),
           price: plan.price,
           discount: Math.min(Math.max(0, Math.round(input.discount ?? 0)), plan.price),
+          joiningFee: Math.max(0, Math.round(input.joiningFee ?? plan.joiningFee ?? 1000)),
           frozen: false,
           createdAt: iso(new Date()),
         };
         next = { ...next, memberships: [membership, ...next.memberships] };
-        const payable = membership.price - membership.discount;
+        const payable = membership.price - membership.discount + (membership.joiningFee ?? 0);
         const paidNow = Math.min(Math.max(0, Math.round(input.paidNow ?? 0)), payable);
         if (paidNow > 0) {
           const [withSeq, invoiceNo] = nextInvoice(next);
@@ -497,10 +505,11 @@ export function renewMembership(memberId: string, planId: string, paidNow: numbe
       endDate: iso(end),
       price: plan.price,
       discount: Math.min(Math.max(0, Math.round(discount)), plan.price),
+      joiningFee: 0,
       frozen: false,
       createdAt: iso(new Date()),
     };
-    const payable = membership.price - membership.discount;
+    const payable = membership.price - membership.discount + (membership.joiningFee ?? 0);
     const collected = Math.min(Math.max(0, Math.round(paidNow)), payable);
     let next: GymState = { ...st, memberships: [membership, ...st.memberships] };
     next = log(
@@ -579,7 +588,10 @@ export function addPayment(input: {
   const alreadyPaid = state.payments
     .filter((payment) => payment.membershipId === membership.id)
     .reduce((sum, payment) => sum + payment.amount, 0);
-  const remaining = Math.max(0, membership.price - membership.discount - alreadyPaid);
+  const remaining = Math.max(
+    0,
+    membership.price - membership.discount + (membership.joiningFee ?? 0) - alreadyPaid,
+  );
   if (amount > remaining) return false;
 
   setState((st) => {

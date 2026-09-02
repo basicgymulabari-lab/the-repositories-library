@@ -60,6 +60,7 @@ try {
       assert(memberIds.has(item.memberId), `membership ${item.id} has a missing member`);
       assert(planIds.has(item.planId), `membership ${item.id} has a missing plan`);
       assert(item.price >= 0 && item.discount >= 0 && item.discount <= item.price);
+      assert((item.joiningFee ?? 0) >= 0);
       assert(new Date(item.endDate) >= new Date(item.startDate));
     });
     state.payments.forEach((item) => {
@@ -76,6 +77,7 @@ try {
     state.products.forEach((item) => {
       assert(item.stock >= 0 && item.cost >= 0 && item.price >= 0);
     });
+    state.plans.forEach((item) => assert((item.joiningFee ?? 0) >= 0));
 
     assert.equal(
       selectors.totalRevenue(state),
@@ -110,6 +112,7 @@ try {
     address: "Test address",
     emergencyContact: "+91 91111 11111",
     planId: "plan_monthly",
+    joiningFee: 750,
     discount: 100,
     paidNow: 500,
   });
@@ -117,14 +120,14 @@ try {
   assert.equal(state.members.length, memberCount + 1);
   const testMember = state.members.find((item) => item.email === "logic@example.com");
   assert(testMember);
-  assert.equal(selectors.dueFor(state, testMember.id), 900);
+  assert.equal(selectors.dueFor(state, testMember.id), 1650);
 
   const membership = selectors.currentMembership(state, testMember.id);
   assert(membership);
   store.addPayment({
     memberId: testMember.id,
     membershipId: membership.id,
-    amount: 900,
+    amount: 1650,
     method: "cash",
   });
   assert.equal(selectors.dueFor(store.getState(), testMember.id), 0);

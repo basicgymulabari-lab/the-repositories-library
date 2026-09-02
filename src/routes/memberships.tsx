@@ -147,6 +147,9 @@ function MembershipsPage() {
                 </div>
               </div>
               <p className="mt-3 font-display text-3xl text-gradient-gold">{money(p.price, cur)}</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Default joining fee: {money(p.joiningFee ?? 1000, cur)}
+              </p>
               <p className="mt-2 text-sm text-muted-foreground">{p.description}</p>
               <p className="mt-3 text-xs text-muted-foreground">
                 {
@@ -353,6 +356,7 @@ function PlanDialog({
   const [form, setForm] = useState({
     name: "",
     price: "",
+    joiningFee: "1000",
     durationDays: "",
     description: "",
     locked: false,
@@ -364,6 +368,7 @@ function PlanDialog({
       setForm({
         name: plan?.name ?? "",
         price: plan ? String(plan.price) : "",
+        joiningFee: String(plan?.joiningFee ?? 1000),
         durationDays: plan ? String(plan.durationDays) : "",
         description: plan?.description ?? "",
         locked: plan?.locked ?? false,
@@ -373,7 +378,10 @@ function PlanDialog({
   }, [open, plan]);
 
   const invalid =
-    form.name.trim().length < 2 || Number(form.price) <= 0 || Number(form.durationDays) <= 0;
+    form.name.trim().length < 2 ||
+    Number(form.price) <= 0 ||
+    Number(form.joiningFee) < 0 ||
+    Number(form.durationDays) <= 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -392,7 +400,7 @@ function PlanDialog({
               onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid gap-4 sm:grid-cols-3">
             <div className="space-y-2">
               <Label>Price</Label>
               <Input
@@ -400,6 +408,15 @@ function PlanDialog({
                 min={0}
                 value={form.price}
                 onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Default joining fee</Label>
+              <Input
+                type="number"
+                min={0}
+                value={form.joiningFee}
+                onChange={(e) => setForm((f) => ({ ...f, joiningFee: e.target.value }))}
               />
             </div>
             <div className="space-y-2">
@@ -435,7 +452,7 @@ function PlanDialog({
           </div>
           {touched && invalid && (
             <p className="text-xs text-destructive">
-              Provide a name, a price above 0 and a duration of at least 1 day.
+              Provide a name, price, non-negative joining fee and duration of at least 1 day.
             </p>
           )}
           <div className="flex justify-end gap-2">
@@ -450,6 +467,7 @@ function PlanDialog({
                   id: plan?.id,
                   name: form.name.trim(),
                   price: Number(form.price),
+                  joiningFee: Number(form.joiningFee),
                   durationDays: Number(form.durationDays),
                   description: form.description.trim(),
                   active: true,

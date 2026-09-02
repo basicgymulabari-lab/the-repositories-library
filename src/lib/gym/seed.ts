@@ -31,6 +31,7 @@ const PLANS: Plan[] = [
     id: "plan_monthly",
     name: "Monthly Strength",
     price: 1500,
+    joiningFee: 1000,
     durationDays: 30,
     description: "Full gym floor access, locker and one body composition check.",
     active: true,
@@ -39,6 +40,7 @@ const PLANS: Plan[] = [
     id: "plan_quarterly",
     name: "Quarterly Power",
     price: 4000,
+    joiningFee: 1000,
     durationDays: 90,
     description: "Gym floor, group classes and monthly progress tracking.",
     active: true,
@@ -47,6 +49,7 @@ const PLANS: Plan[] = [
     id: "plan_halfyear",
     name: "Half Yearly Elite",
     price: 7200,
+    joiningFee: 1000,
     durationDays: 180,
     description: "All classes, sauna access and quarterly diet consultation.",
     active: true,
@@ -55,6 +58,7 @@ const PLANS: Plan[] = [
     id: "plan_annual",
     name: "Annual Platinum",
     price: 12000,
+    joiningFee: 1000,
     durationDays: 365,
     description: "Unlimited access, personal trainer sessions and priority booking.",
     active: true,
@@ -63,6 +67,7 @@ const PLANS: Plan[] = [
     id: "plan_pt",
     name: "Personal Training",
     price: 9000,
+    joiningFee: 1000,
     durationDays: 60,
     description: "24 one-to-one coaching sessions with a certified trainer.",
     active: true,
@@ -371,6 +376,7 @@ export function buildSeed(): GymState {
         endDate: iso(prevEnd),
         price: plan.price,
         discount: 0,
+        joiningFee: 0,
         frozen: false,
         createdAt: iso(prevStart),
       });
@@ -396,12 +402,13 @@ export function buildSeed(): GymState {
       endDate: iso(end),
       price: plan.price,
       discount: i % 5 === 0 ? 200 : 0,
+      joiningFee: 1000,
       frozen: Boolean(seed.frozen),
       frozenAt: seed.frozen ? iso(addDays(now, -9)) : null,
       createdAt: iso(start),
     });
 
-    const payable = plan.price - (i % 5 === 0 ? 200 : 0);
+    const payable = plan.price - (i % 5 === 0 ? 200 : 0) + 1000;
     const paid = Math.round(payable * seed.paidRatio);
     if (paid > 0) {
       payments.push({

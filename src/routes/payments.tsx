@@ -28,6 +28,7 @@ import {
   gymMembers,
   isWalkIn,
   membershipHistory,
+  membershipPayable,
   memberOf,
   money,
   outstandingFor,
@@ -270,7 +271,7 @@ function PaymentsPage() {
                     (sum, sale) => sum + salePaid(state, sale),
                     0,
                   );
-                  const membershipTotal = ms ? ms.price - ms.discount : 0;
+                  const membershipTotal = ms ? membershipPayable(ms) : 0;
                   const membershipPaid = ms ? paidFor(state, ms.id) : 0;
                   const price = membershipTotal + productTotal;
                   const paid = membershipPaid + productPaid;
@@ -371,10 +372,10 @@ function PaymentDialog({
   if (!state) return null;
   const ms = memberId
     ? membershipHistory(state, memberId).find(
-        (membership) => membership.price - membership.discount - paidFor(state, membership.id) > 0,
+        (membership) => membershipPayable(membership) - paidFor(state, membership.id) > 0,
       )
     : undefined;
-  const due = ms ? Math.max(0, ms.price - ms.discount - paidFor(state, ms.id)) : 0;
+  const due = ms ? Math.max(0, membershipPayable(ms) - paidFor(state, ms.id)) : 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

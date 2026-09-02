@@ -47,6 +47,7 @@ import {
   liveProducts,
   lowStock,
   metricMeta,
+  membershipPayable,
   money,
   planDistribution,
   profitOfSales,
@@ -161,8 +162,7 @@ function Dashboard() {
       ...state.memberships.flatMap((membership) => {
         const due = Math.max(
           0,
-          membership.price -
-            membership.discount -
+          membershipPayable(membership) -
             state.payments
               .filter((payment) => payment.membershipId === membership.id)
               .reduce((sum, payment) => sum + payment.amount, 0),

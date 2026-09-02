@@ -56,6 +56,7 @@ import {
   dueFor,
   isWalkIn,
   membershipHistory,
+  membershipPayable,
   money,
   outstandingFor,
   paidFor,
@@ -248,6 +249,9 @@ function MemberProfile() {
                 <Row label="Start" value={shortDate(ms.startDate)} />
                 <Row label="Expiry" value={shortDate(ms.endDate)} />
                 <Row label="Plan price" value={money(ms.price - ms.discount, cur)} />
+                {(ms.joiningFee ?? 0) > 0 && (
+                  <Row label="Joining fee" value={money(ms.joiningFee ?? 0, cur)} />
+                )}
                 <Row label="Paid" value={money(paidFor(state, ms.id), cur)} />
                 <div className="flex items-center justify-between border-t border-border pt-3">
                   <span className="text-muted-foreground">Total due</span>
@@ -291,7 +295,7 @@ function MemberProfile() {
                   <tbody>
                     {membershipHistory(state, member.id).map((h) => {
                       const paid = paidFor(state, h.id);
-                      const bal = Math.max(0, h.price - h.discount - paid);
+                      const bal = Math.max(0, membershipPayable(h) - paid);
                       return (
                         <tr key={h.id} className="border-b border-border/50">
                           <td className="py-3">{planOf(state, h.planId)?.name ?? "—"}</td>
@@ -300,7 +304,7 @@ function MemberProfile() {
                           </td>
                           <td className="py-3 text-right">{money(h.price, cur)}</td>
                           <td className="py-3 text-right">
-                            {money(h.price - h.discount, cur)}
+                            {money(membershipPayable(h), cur)}
                             {h.discount > 0 && (
                               <span className="block text-xs text-muted-foreground">
                                 - {money(h.discount, cur)}
@@ -672,7 +676,7 @@ function CollectBalanceDialog({
   const membership = target.kind === "membership" ? target.membership : null;
   const sale = target.kind === "purchase" ? target.sale : null;
   const targetId = membership?.id ?? sale!.id;
-  const total = membership ? membership.price - membership.discount : sale!.total;
+  const total = membership ? membershipPayable(membership) : sale!.total;
   const paid = membership ? paidFor(state, membership.id) : salePaid(state, sale!);
   const balance = Math.max(0, total - paid);
   const plan = membership ? planOf(state, membership.planId) : null;
