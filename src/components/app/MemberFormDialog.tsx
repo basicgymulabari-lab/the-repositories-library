@@ -68,6 +68,7 @@ export function MemberFormDialog({
   const state = useGym();
   const [form, setForm] = useState<FormState>(empty);
   const [step, setStep] = useState<1 | 2>(1);
+  const [membershipStepReady, setMembershipStepReady] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [cameraOpen, setCameraOpen] = useState(false);
   const [cameraError, setCameraError] = useState("");
@@ -82,6 +83,7 @@ export function MemberFormDialog({
   const dragRef = useRef<{ x: number; y: number; startX: number; startY: number } | null>(null);
   const initializedForRef = useRef<string | null>(null);
   const stepTransitionRef = useRef(false);
+  const stepReadyTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!open) {
@@ -93,6 +95,7 @@ export function MemberFormDialog({
     initializedForRef.current = initializationKey;
     setErrors({});
     setStep(1);
+    setMembershipStepReady(false);
     const firstPlan = state?.plans.find((p) => !p.deletedAt);
     setForm(
       member
@@ -162,6 +165,10 @@ export function MemberFormDialog({
     if (!open) {
       setCameraOpen(false);
       setCropSource(null);
+      if (stepReadyTimerRef.current !== null) {
+        window.clearTimeout(stepReadyTimerRef.current);
+        stepReadyTimerRef.current = null;
+      }
     }
   }, [open]);
 
@@ -235,10 +242,16 @@ export function MemberFormDialog({
   const advanceToMembership = () => {
     if (!validatePersonal()) return;
     stepTransitionRef.current = true;
+    setMembershipStepReady(false);
     setStep(2);
     window.setTimeout(() => {
       stepTransitionRef.current = false;
     }, 250);
+    if (stepReadyTimerRef.current !== null) window.clearTimeout(stepReadyTimerRef.current);
+    stepReadyTimerRef.current = window.setTimeout(() => {
+      setMembershipStepReady(true);
+      stepReadyTimerRef.current = null;
+    }, 600);
   };
 
   const validate = () => {
@@ -388,6 +401,7 @@ export function MemberFormDialog({
       advanceToMembership();
       return;
     }
+    if (!member && !membershipStepReady) return;
     if (!validate()) return;
     const payload = {
       name: form.name.trim(),
@@ -709,7 +723,14 @@ export function MemberFormDialog({
               Cancel
             </Button>
             {!member && step === 2 && (
-              <Button type="button" variant="secondary" onClick={() => setStep(1)}>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => {
+                  setMembershipStepReady(false);
+                  setStep(1);
+                }}
+              >
                 Back
               </Button>
             )}
@@ -718,7 +739,9 @@ export function MemberFormDialog({
                 Next
               </Button>
             ) : (
-              <Button type="submit">{member ? "Save changes" : "Add member"}</Button>
+              <Button type="submit" disabled={!member && !membershipStepReady}>
+                {member ? "Save changes" : "Add member"}
+              </Button>
             )}
           </div>
         </form>
