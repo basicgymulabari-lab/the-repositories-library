@@ -231,7 +231,7 @@ export function MemberFormDialog({
     const e: Record<string, string> = {};
     if (form.name.trim().length < 2) e.name = "Name must be at least 2 characters.";
     if (form.name.trim().length > 80) e.name = "Name is too long.";
-    if ((!editingWalkIn || form.email.trim()) && !/^\S+@\S+\.\S+$/.test(form.email.trim()))
+    if (form.email.trim() && !/^\S+@\S+\.\S+$/.test(form.email.trim()))
       e.email = "Enter a valid email address.";
     if (form.phone.trim().replace(/\D/g, "").length < 8) e.phone = "Enter a valid phone number.";
     if (!editingWalkIn && !form.dob) e.dob = "Date of birth is required.";
@@ -554,7 +554,7 @@ export function MemberFormDialog({
                     maxLength={20}
                   />
                 </Field>
-                <Field label="Email" error={errors.email}>
+                <Field label="Email (optional)" error={errors.email}>
                   <Input
                     value={form.email}
                     onChange={(e) => set("email", e.target.value)}
