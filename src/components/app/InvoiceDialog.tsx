@@ -160,6 +160,14 @@ export function InvoiceDialog({
                   <td className="py-2.5 text-right">{money(l.qty * l.rate, settings.currency)}</td>
                 </tr>
               ))}
+              {joiningFee > 0 && (
+                <tr className="border-b border-border/60">
+                  <td className="py-2.5">Joining / admission fee</td>
+                  <td className="py-2.5 text-center">1</td>
+                  <td className="py-2.5 text-right">{money(joiningFee, settings.currency)}</td>
+                  <td className="py-2.5 text-right">{money(joiningFee, settings.currency)}</td>
+                </tr>
+              )}
             </tbody>
           </table>
 
@@ -169,12 +177,6 @@ export function InvoiceDialog({
                 <Row label="Original amount" value={money(gross, settings.currency)} />
                 <Row label="Discount" value={`- ${money(discount, settings.currency)}`} />
               </>
-            )}
-            {joiningFee > 0 && (
-              <Row
-                label="Joining / admission fee"
-                value={`+ ${money(joiningFee, settings.currency)}`}
-              />
             )}
             <Row
               label={discount > 0 || joiningFee > 0 ? "Final amount" : "Total"}
