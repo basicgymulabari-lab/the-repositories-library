@@ -216,6 +216,12 @@ function PaymentsPage() {
                             : undefined;
                           const payer = memberOf(state, p.memberId);
                           const walkIn = Boolean(sale && (!payer || isWalkIn(payer)));
+                          const membership = p.membershipId
+                            ? state.memberships.find((item) => item.id === p.membershipId)
+                            : undefined;
+                          const membershipPlan = membership
+                            ? state.plans.find((plan) => plan.id === membership.planId)
+                            : undefined;
                           setInvoice({
                             invoiceNo: p.invoiceNo,
                             date: p.date,
@@ -237,9 +243,18 @@ function PaymentsPage() {
                                     rate: sale.unitPrice,
                                   },
                                 ]
-                              : [{ description: p.note || "Payment", qty: 1, rate: p.amount }],
-                            discount: sale?.discount ?? 0,
-                            paid: p.amount,
+                              : membership
+                                ? [
+                                    {
+                                      description: `${membershipPlan?.name ?? "Membership"} membership`,
+                                      qty: 1,
+                                      rate: membership.price,
+                                    },
+                                  ]
+                                : [{ description: p.note || "Payment", qty: 1, rate: p.amount }],
+                            discount: sale?.discount ?? membership?.discount ?? 0,
+                            joiningFee: membership?.joiningFee ?? 0,
+                            paid: membership ? paidFor(state, membership.id) : p.amount,
                             method: p.method,
                           });
                         }}

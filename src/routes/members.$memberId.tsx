@@ -646,6 +646,7 @@ function invoiceOf(
       contact: phone,
       lines: [{ description: `${plan?.name ?? "Membership"} membership`, qty: 1, rate: ms.price }],
       discount: ms.discount,
+      joiningFee: ms.joiningFee ?? 0,
       paid: paidFor(state, ms.id),
       method: p.method,
     };

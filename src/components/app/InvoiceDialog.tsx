@@ -14,6 +14,8 @@ export type InvoiceData = {
   contact?: string;
   lines: Array<{ description: string; qty: number; rate: number }>;
   discount?: number;
+  /** One-time joining/admission fee included after the membership discount. */
+  joiningFee?: number;
   paid: number;
   method?: string;
   /** Document title, e.g. "Membership Invoice", "Sales Invoice", "Expense Receipt". */
@@ -81,7 +83,8 @@ export function InvoiceDialog({
   if (!invoice) return null;
   const gross = invoice.lines.reduce((s, l) => s + l.qty * l.rate, 0);
   const discount = Math.min(Math.max(0, invoice.discount ?? 0), gross);
-  const total = gross - discount;
+  const joiningFee = Math.max(0, invoice.joiningFee ?? 0);
+  const total = gross - discount + joiningFee;
   const due = Math.max(0, total - invoice.paid);
   const status = invoice.status ?? invoiceStatusOf(total, invoice.paid);
   const statusTone =
@@ -167,8 +170,14 @@ export function InvoiceDialog({
                 <Row label="Discount" value={`- ${money(discount, settings.currency)}`} />
               </>
             )}
+            {joiningFee > 0 && (
+              <Row
+                label="Joining / admission fee"
+                value={`+ ${money(joiningFee, settings.currency)}`}
+              />
+            )}
             <Row
-              label={discount > 0 ? "Final amount" : "Total"}
+              label={discount > 0 || joiningFee > 0 ? "Final amount" : "Total"}
               value={money(total, settings.currency)}
             />
             <Row label="Paid" value={money(invoice.paid, settings.currency)} />
