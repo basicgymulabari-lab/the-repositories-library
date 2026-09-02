@@ -1,0 +1,309 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * IRONVAULT design system — luxurious black & metallic gold.
+ * All colors are oklch semantic tokens. Never hardcode colors in components.
+ */
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-gold: var(--gold);
+  --color-gold-soft: var(--gold-soft);
+  --color-gold-deep: var(--gold-deep);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ring-offset-background: var(--background);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --font-display: "Bebas Neue", "Oswald", system-ui, sans-serif;
+  --font-sans: "Barlow", system-ui, sans-serif;
+}
+
+:root {
+  --radius: 0.75rem;
+
+  --background: oklch(0.145 0.004 285);
+  --foreground: oklch(0.97 0.004 90);
+
+  --card: oklch(0.19 0.005 285);
+  --card-foreground: oklch(0.97 0.004 90);
+
+  --popover: oklch(0.185 0.005 285);
+  --popover-foreground: oklch(0.97 0.004 90);
+
+  /* Metallic gold #D4AF37 */
+  --gold: oklch(0.775 0.128 87.5);
+  --gold-soft: oklch(0.86 0.09 90);
+  --gold-deep: oklch(0.6 0.11 80);
+
+  --primary: oklch(0.775 0.128 87.5);
+  --primary-foreground: oklch(0.16 0.01 90);
+
+  --secondary: oklch(0.245 0.005 285);
+  --secondary-foreground: oklch(0.95 0.004 90);
+
+  --muted: oklch(0.245 0.005 285);
+  --muted-foreground: oklch(0.72 0.008 285);
+
+  --accent: oklch(0.28 0.02 88);
+  --accent-foreground: oklch(0.9 0.09 90);
+
+  --destructive: oklch(0.58 0.21 25);
+  --destructive-foreground: oklch(0.98 0.004 90);
+
+  --success: oklch(0.68 0.15 155);
+  --success-foreground: oklch(0.15 0.02 155);
+  --warning: oklch(0.78 0.15 65);
+  --warning-foreground: oklch(0.17 0.02 65);
+  --info: oklch(0.68 0.12 235);
+
+  --border: oklch(0.29 0.006 285);
+  --input: oklch(0.27 0.006 285);
+  --ring: oklch(0.775 0.128 87.5);
+
+  --chart-1: oklch(0.775 0.128 87.5);
+  --chart-2: oklch(0.6 0.11 80);
+  --chart-3: oklch(0.68 0.15 155);
+  --chart-4: oklch(0.68 0.12 235);
+  --chart-5: oklch(0.58 0.21 25);
+
+  --sidebar: oklch(0.165 0.004 285);
+  --sidebar-foreground: oklch(0.9 0.004 90);
+  --sidebar-primary: oklch(0.775 0.128 87.5);
+  --sidebar-primary-foreground: oklch(0.16 0.01 90);
+  --sidebar-accent: oklch(0.235 0.008 285);
+  --sidebar-accent-foreground: oklch(0.9 0.09 90);
+  --sidebar-border: oklch(0.26 0.006 285);
+  --sidebar-ring: oklch(0.775 0.128 87.5);
+
+  --gradient-gold: linear-gradient(
+    135deg,
+    oklch(0.6 0.11 80) 0%,
+    oklch(0.86 0.1 90) 45%,
+    oklch(0.7 0.12 82) 100%
+  );
+  --gradient-surface: linear-gradient(
+    160deg,
+    oklch(0.215 0.006 285) 0%,
+    oklch(0.17 0.004 285) 100%
+  );
+  --shadow-gold: 0 18px 45px -22px oklch(0.775 0.128 87.5 / 0.55);
+  --shadow-elevated: 0 24px 60px -30px oklch(0 0 0 / 0.9);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-inline: contain;
+  }
+
+  h1,
+  h2,
+  h3,
+  .font-display {
+    font-family: var(--font-display);
+    letter-spacing: 0.02em;
+  }
+
+  ::-webkit-scrollbar {
+    width: 9px;
+    height: 9px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-gold-deep);
+  }
+
+  /* Native date/time pickers: white calendar icon on the dark theme,
+     gold on hover/focus. */
+  input[type="date"]::-webkit-calendar-picker-indicator,
+  input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+  input[type="month"]::-webkit-calendar-picker-indicator,
+  input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: invert(1) brightness(2);
+    opacity: 0.85;
+    cursor: pointer;
+    transition:
+      filter 0.15s ease,
+      opacity 0.15s ease;
+  }
+  input[type="date"]:hover::-webkit-calendar-picker-indicator,
+  input[type="datetime-local"]:hover::-webkit-calendar-picker-indicator,
+  input[type="month"]:hover::-webkit-calendar-picker-indicator,
+  input[type="time"]:hover::-webkit-calendar-picker-indicator,
+  input[type="date"]:focus::-webkit-calendar-picker-indicator {
+    filter: invert(72%) sepia(58%) saturate(560%) hue-rotate(1deg) brightness(94%) contrast(92%);
+    opacity: 1;
+  }
+}
+
+@utility text-gradient-gold {
+  background: var(--gradient-gold);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@utility surface-panel {
+  background: var(--gradient-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-elevated);
+}
+
+@utility gold-ring {
+  border: 1px solid color-mix(in oklab, var(--color-gold) 35%, transparent);
+  box-shadow: var(--shadow-gold);
+}
+
+@utility hairline-top {
+  &::before {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in oklab, var(--color-gold) 55%, transparent),
+      transparent
+    );
+  }
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+  .no-print {
+    display: none !important;
+  }
+  html,
+  body {
+    background: #fff;
+    color: #000;
+    margin: 0 !important;
+    padding: 0 !important;
+    height: auto !important;
+  }
+  /* Drop every top-level branch that does not contain the invoice, so the
+     invoice is the first flow content and starts at the top of page 1. */
+  body.invoice-printing > *:not(:has(#invoice-print)) {
+    display: none !important;
+  }
+  /* Neutralise the dialog wrappers so the invoice can flow across pages. */
+  body.invoice-printing [data-slot="dialog-overlay"],
+  body.invoice-printing [data-radix-dialog-overlay] {
+    display: none !important;
+  }
+  body.invoice-printing [role="dialog"] {
+    position: static !important;
+    inset: auto !important;
+    transform: none !important;
+    --tw-translate-x: 0 !important;
+    --tw-translate-y: 0 !important;
+    width: auto !important;
+    max-width: none !important;
+    max-height: none !important;
+    overflow: visible !important;
+    display: block !important;
+    gap: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+  body.invoice-printing [role="dialog"] {
+    translate: 0 0 !important;
+  }
+  body.invoice-printing #invoice-print,
+  body.invoice-printing #invoice-print * {
+    color: #000 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+  body.invoice-printing #invoice-print {
+    position: static !important;
+    margin: 0 !important;
+    width: 100%;
+    max-width: none;
+    border: none !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+  /* Small invoices stay on one page; long ones flow onto the next page
+     without cutting rows in half. */
+  body.invoice-printing #invoice-print table {
+    page-break-inside: auto;
+  }
+  body.invoice-printing #invoice-print tr,
+  body.invoice-printing #invoice-print p {
+    page-break-inside: avoid;
+  }
+  body.invoice-printing #invoice-print thead {
+    display: table-header-group;
+  }
+}
