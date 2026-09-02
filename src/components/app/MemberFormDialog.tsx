@@ -36,6 +36,7 @@ type FormState = {
   emergencyContact: string;
   photo: string | null;
   planId: string;
+  startDate: string;
   joiningFee: string;
   discountType: "none" | "percent" | "fixed";
   discountValue: string;
@@ -53,12 +54,18 @@ const empty: FormState = {
   emergencyContact: "",
   photo: null,
   planId: "",
+  startDate: "",
   joiningFee: "1000",
   discountType: "none",
   discountValue: "",
   paidNow: "",
   paymentMethod: "cash",
 };
+
+const toDateInput = (date: Date) =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
+    date.getDate(),
+  ).padStart(2, "0")}`;
 
 export function MemberFormDialog({
   open,
@@ -74,6 +81,7 @@ export function MemberFormDialog({
   const [step, setStep] = useState<1 | 2>(1);
   const [membershipStepReady, setMembershipStepReady] = useState(false);
   const [dobOpen, setDobOpen] = useState(false);
+  const [startDateOpen, setStartDateOpen] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [cameraOpen, setCameraOpen] = useState(false);
   const [cameraError, setCameraError] = useState("");
@@ -113,13 +121,14 @@ export function MemberFormDialog({
             emergencyContact: member.emergencyContact,
             photo: member.photo ?? null,
             planId: "",
+            startDate: "",
             joiningFee: "",
             discountType: "none",
             discountValue: "",
             paidNow: "",
             paymentMethod: "cash",
           }
-        : empty,
+        : { ...empty, startDate: toDateInput(new Date()) },
     );
   }, [open, member, state]);
 
@@ -167,6 +176,7 @@ export function MemberFormDialog({
       setCameraOpen(false);
       setCropSource(null);
       setDobOpen(false);
+      setStartDateOpen(false);
       if (stepReadyTimerRef.current !== null) {
         window.clearTimeout(stepReadyTimerRef.current);
         stepReadyTimerRef.current = null;
@@ -195,10 +205,15 @@ export function MemberFormDialog({
   const remainingBalance = Math.max(0, finalPrice - (Number.isFinite(paidNowNum) ? paidNowNum : 0));
   const cur = state.settings.currency;
   const selectedDob = form.dob ? new Date(`${form.dob}T00:00:00`) : undefined;
-  const toDateInput = (date: Date) =>
-    `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
-      date.getDate(),
-    ).padStart(2, "0")}`;
+  const selectedStartDate = form.startDate ? new Date(`${form.startDate}T00:00:00`) : undefined;
+  const calculatedEndDate =
+    selectedPlan && selectedStartDate
+      ? new Date(
+          selectedStartDate.getFullYear(),
+          selectedStartDate.getMonth(),
+          selectedStartDate.getDate() + selectedPlan.durationDays,
+        )
+      : undefined;
 
   // Live (auto-updating) validation for discount + amount paid.
   let liveDiscountError = "";
@@ -264,6 +279,7 @@ export function MemberFormDialog({
   const validate = () => {
     const e = personalErrors();
     if (!member && !form.planId) e.planId = "Select a membership plan.";
+    if (!member && !form.startDate) e.startDate = "Select a membership start date.";
     if (liveJoiningFeeError) e.joiningFee = liveJoiningFeeError;
     if (liveDiscountError) e.discount = liveDiscountError;
     if (livePaidError) e.paidNow = livePaidError;
@@ -427,6 +443,7 @@ export function MemberFormDialog({
       addMember({
         ...payload,
         planId: form.planId || undefined,
+        startDate: form.startDate ? `${form.startDate}T00:00:00` : undefined,
         joiningFee,
         discount: form.planId ? discountAmount : 0,
         paidNow: Math.min(Number(form.paidNow || 0), form.planId ? finalPrice : 0),
@@ -681,6 +698,53 @@ export function MemberFormDialog({
                   value={form.joiningFee}
                   onChange={(e) => set("joiningFee", e.target.value)}
                 />
+              </Field>
+              <Field label="Membership start date" error={errors.startDate}>
+                <Popover open={startDateOpen} onOpenChange={setStartDateOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full justify-between px-3 font-normal"
+                    >
+                      {selectedStartDate
+                        ? selectedStartDate.toLocaleDateString("en-GB", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                          })
+                        : "Select start date"}
+                      <CalendarIcon className="h-4 w-4 text-gold" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent align="start" className="w-auto border-gold/25 p-0">
+                    <Calendar
+                      mode="single"
+                      selected={selectedStartDate}
+                      defaultMonth={selectedStartDate ?? new Date()}
+                      onSelect={(date) => {
+                        if (!date) return;
+                        set("startDate", toDateInput(date));
+                        setStartDateOpen(false);
+                      }}
+                      disabled={{ before: new Date(new Date().setHours(0, 0, 0, 0)) }}
+                      startMonth={new Date()}
+                      endMonth={new Date(new Date().getFullYear() + 5, 11, 31)}
+                      captionLayout="dropdown"
+                      className="rounded-xl bg-popover"
+                    />
+                  </PopoverContent>
+                </Popover>
+                {calculatedEndDate && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Ends automatically on{" "}
+                    {calculatedEndDate.toLocaleDateString("en-GB", {
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
+                    })}
+                  </p>
+                )}
               </Field>
               <Field label="Discount type">
                 <Select

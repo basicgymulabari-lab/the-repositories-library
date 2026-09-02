@@ -112,6 +112,7 @@ try {
     address: "Test address",
     emergencyContact: "+91 91111 11111",
     planId: "plan_monthly",
+    startDate: "2030-01-10T00:00:00.000Z",
     joiningFee: 750,
     discount: 100,
     paidNow: 500,
@@ -125,6 +126,14 @@ try {
 
   const membership = selectors.currentMembership(state, testMember.id);
   assert(membership);
+  assert.equal(membership.startDate.slice(0, 10), "2030-01-10");
+  assert.equal(
+    Math.round(
+      (new Date(membership.endDate).getTime() - new Date(membership.startDate).getTime()) /
+        selectors.DAY,
+    ),
+    state.plans.find((plan) => plan.id === membership.planId).durationDays,
+  );
   assert.equal(
     state.payments.find((payment) => payment.membershipId === membership.id)?.method,
     "upi",
