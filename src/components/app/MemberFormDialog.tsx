@@ -101,7 +101,6 @@ export function MemberFormDialog({
     setErrors({});
     setStep(1);
     setMembershipStepReady(false);
-    const firstPlan = state?.plans.find((p) => !p.deletedAt);
     setForm(
       member
         ? {
@@ -120,11 +119,7 @@ export function MemberFormDialog({
             paidNow: "",
             paymentMethod: "cash",
           }
-        : {
-            ...empty,
-            planId: firstPlan?.id ?? "",
-            joiningFee: String(firstPlan?.joiningFee ?? 1000),
-          },
+        : empty,
     );
   }, [open, member, state]);
 
@@ -808,7 +803,7 @@ export function MemberFormDialog({
                 Next
               </Button>
             ) : (
-              <Button type="submit" disabled={!member && !membershipStepReady}>
+              <Button type="submit" disabled={!member && (!membershipStepReady || !form.planId)}>
                 {member ? "Save changes" : "Add member"}
               </Button>
             )}
