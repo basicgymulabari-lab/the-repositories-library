@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { CalendarIcon, Camera, RotateCw, Upload } from "lucide-react";
+import { Camera, RotateCw, Upload } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -13,8 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { AppDatePicker } from "@/components/app/AppDatePicker";
 import {
   Select,
   SelectContent,
@@ -24,7 +23,7 @@ import {
 } from "@/components/ui/select";
 import { addMember, updateMember, useGym } from "@/lib/gym/store";
 import type { Member, PaymentMethod } from "@/lib/gym/types";
-import { isWalkIn } from "@/lib/gym/selectors";
+import { isWalkIn, shortDate } from "@/lib/gym/selectors";
 
 type FormState = {
   name: string;
@@ -80,8 +79,6 @@ export function MemberFormDialog({
   const [form, setForm] = useState<FormState>(empty);
   const [step, setStep] = useState<1 | 2>(1);
   const [membershipStepReady, setMembershipStepReady] = useState(false);
-  const [dobOpen, setDobOpen] = useState(false);
-  const [startDateOpen, setStartDateOpen] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [cameraOpen, setCameraOpen] = useState(false);
   const [cameraError, setCameraError] = useState("");
@@ -175,8 +172,6 @@ export function MemberFormDialog({
     if (!open) {
       setCameraOpen(false);
       setCropSource(null);
-      setDobOpen(false);
-      setStartDateOpen(false);
       if (stepReadyTimerRef.current !== null) {
         window.clearTimeout(stepReadyTimerRef.current);
         stepReadyTimerRef.current = null;
@@ -204,7 +199,6 @@ export function MemberFormDialog({
   const paidNowNum = Number(form.paidNow || 0);
   const remainingBalance = Math.max(0, finalPrice - (Number.isFinite(paidNowNum) ? paidNowNum : 0));
   const cur = state.settings.currency;
-  const selectedDob = form.dob ? new Date(`${form.dob}T00:00:00`) : undefined;
   const selectedStartDate = form.startDate ? new Date(`${form.startDate}T00:00:00`) : undefined;
   const calculatedEndDate =
     selectedPlan && selectedStartDate
@@ -580,43 +574,13 @@ export function MemberFormDialog({
                 </Field>
                 {!editingWalkIn && (
                   <Field label="Date of birth" error={errors.dob}>
-                    <Popover open={dobOpen} onOpenChange={setDobOpen}>
-                      <PopoverTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className={`w-full justify-between px-3 font-normal ${
-                            selectedDob ? "text-foreground" : "text-muted-foreground"
-                          }`}
-                        >
-                          {selectedDob
-                            ? selectedDob.toLocaleDateString("en-GB", {
-                                day: "2-digit",
-                                month: "short",
-                                year: "numeric",
-                              })
-                            : "Select date of birth"}
-                          <CalendarIcon className="h-4 w-4 text-gold" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent align="start" className="w-auto border-gold/25 p-0">
-                        <Calendar
-                          mode="single"
-                          selected={selectedDob}
-                          defaultMonth={selectedDob ?? new Date(1995, 0, 1)}
-                          onSelect={(date) => {
-                            if (!date) return;
-                            set("dob", toDateInput(date));
-                            setDobOpen(false);
-                          }}
-                          disabled={{ after: new Date() }}
-                          startMonth={new Date(1920, 0, 1)}
-                          endMonth={new Date()}
-                          captionLayout="dropdown"
-                          className="rounded-xl bg-popover"
-                        />
-                      </PopoverContent>
-                    </Popover>
+                    <AppDatePicker
+                      value={form.dob}
+                      onChange={(value) => set("dob", value)}
+                      min={new Date(1920, 0, 1)}
+                      max={new Date()}
+                      placeholder="Select date of birth"
+                    />
                   </Field>
                 )}
                 {!editingWalkIn && (
@@ -700,49 +664,16 @@ export function MemberFormDialog({
                 />
               </Field>
               <Field label="Membership start date" error={errors.startDate}>
-                <Popover open={startDateOpen} onOpenChange={setStartDateOpen}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="w-full justify-between px-3 font-normal"
-                    >
-                      {selectedStartDate
-                        ? selectedStartDate.toLocaleDateString("en-GB", {
-                            day: "2-digit",
-                            month: "short",
-                            year: "numeric",
-                          })
-                        : "Select start date"}
-                      <CalendarIcon className="h-4 w-4 text-gold" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent align="start" className="w-auto border-gold/25 p-0">
-                    <Calendar
-                      mode="single"
-                      selected={selectedStartDate}
-                      defaultMonth={selectedStartDate ?? new Date()}
-                      onSelect={(date) => {
-                        if (!date) return;
-                        set("startDate", toDateInput(date));
-                        setStartDateOpen(false);
-                      }}
-                      disabled={{ before: new Date(new Date().setHours(0, 0, 0, 0)) }}
-                      startMonth={new Date()}
-                      endMonth={new Date(new Date().getFullYear() + 5, 11, 31)}
-                      captionLayout="dropdown"
-                      className="rounded-xl bg-popover"
-                    />
-                  </PopoverContent>
-                </Popover>
+                <AppDatePicker
+                  value={form.startDate}
+                  onChange={(value) => set("startDate", value)}
+                  min={new Date(new Date().setHours(0, 0, 0, 0))}
+                  max={new Date(new Date().getFullYear() + 5, 11, 31)}
+                  placeholder="Select start date"
+                />
                 {calculatedEndDate && (
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Ends automatically on{" "}
-                    {calculatedEndDate.toLocaleDateString("en-GB", {
-                      day: "2-digit",
-                      month: "short",
-                      year: "numeric",
-                    })}
+                    Ends automatically on {shortDate(calculatedEndDate)}
                   </p>
                 )}
               </Field>

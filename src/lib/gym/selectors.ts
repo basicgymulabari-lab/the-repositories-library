@@ -1,35 +1,15 @@
 import type { GymState, Member, MemberStatus, Membership, Payment, Product, Sale } from "./types";
+import { formatCompactDate, formatDayMonth, formatMonth, formatShortDate } from "./calendar";
 
 export const DAY = 24 * 60 * 60 * 1000;
 
 export const money = (n: number, currency = "₹") =>
   `${currency}${Math.round(n).toLocaleString("en-IN")}`;
 
-export const shortDate = (d: string | Date) =>
-  new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
-
-const MONTHS_3 = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-];
+export const shortDate = formatShortDate;
 
 /** Compact date: 03 Aug 26 */
-export const compactDate = (d: string | Date) => {
-  const dt = new Date(d);
-  return `${String(dt.getDate()).padStart(2, "0")} ${MONTHS_3[dt.getMonth()]} ${String(
-    dt.getFullYear(),
-  ).slice(-2)}`;
-};
+export const compactDate = formatCompactDate;
 
 export const dateTime = (d: string | Date) =>
   new Date(d).toLocaleString("en-IN", {
@@ -161,7 +141,7 @@ export function revenueSeries(s: GymState, range: Range) {
       d.setHours(0, 0, 0, 0);
       const e = new Date(d);
       e.setHours(23, 59, 59, 999);
-      mk(d.toLocaleDateString("en-IN", { day: "2-digit", month: "short" }), d, e);
+      mk(formatDayMonth(d), d, e);
     }
   } else if (range === "weekly") {
     for (let i = 11; i >= 0; i--) {
@@ -177,7 +157,7 @@ export function revenueSeries(s: GymState, range: Range) {
     for (let i = 11; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const e = new Date(now.getFullYear(), now.getMonth() - i + 1, 0, 23, 59, 59);
-      mk(d.toLocaleDateString("en-IN", { month: "short" }), d, e);
+      mk(formatMonth(d), d, e);
     }
   } else {
     for (let i = 4; i >= 0; i--) {
@@ -504,7 +484,7 @@ export function expenseSeries(s: GymState, range: Range) {
       d.setHours(0, 0, 0, 0);
       const e = new Date(d);
       e.setHours(23, 59, 59, 999);
-      mk(d.toLocaleDateString("en-IN", { day: "2-digit", month: "short" }), d, e);
+      mk(formatDayMonth(d), d, e);
     }
   } else if (range === "weekly") {
     for (let i = 11; i >= 0; i--) {
@@ -520,7 +500,7 @@ export function expenseSeries(s: GymState, range: Range) {
     for (let i = 11; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const e = new Date(now.getFullYear(), now.getMonth() - i + 1, 0, 23, 59, 59);
-      mk(d.toLocaleDateString("en-IN", { month: "short" }), d, e);
+      mk(formatMonth(d), d, e);
     }
   } else {
     for (let i = 4; i >= 0; i--) {

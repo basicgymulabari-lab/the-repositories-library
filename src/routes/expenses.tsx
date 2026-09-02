@@ -28,6 +28,7 @@ import { toast } from "sonner";
 import { AppShell } from "@/components/app/AppShell";
 import { PageHeader, Panel, EmptyState } from "@/components/app/Panel";
 import { TablePager } from "@/components/app/TablePager";
+import { AppDatePicker } from "@/components/app/AppDatePicker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -663,11 +664,11 @@ function ExpenseFormDialog({
             </div>
             <div className="space-y-2">
               <Label>Date</Label>
-              <Input
-                type="date"
+              <AppDatePicker
                 value={date}
-                max={todayInput()}
-                onChange={(e) => setDate(e.target.value)}
+                max={new Date()}
+                onChange={setDate}
+                placeholder="Select expense date"
               />
               {errors.date && <p className="text-xs text-destructive">{errors.date}</p>}
             </div>

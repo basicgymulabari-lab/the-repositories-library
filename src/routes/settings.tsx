@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { REVENUE_METRICS, type RevenueMetric } from "@/lib/gym/selectors";
+import type { CalendarSystem } from "@/lib/gym/types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   exportBackup,
@@ -186,6 +187,30 @@ function SettingsPage() {
               {s.invoicePrefix}-{String(state.invoiceSeq + 1).padStart(6, "0")}
             </span>
           </p>
+        </Panel>
+
+        <Panel title="Calendar & Region">
+          <div className="space-y-2">
+            <Label>Calendar system</Label>
+            <Select
+              value={s.calendarSystem ?? "gregorian"}
+              onValueChange={(selected) =>
+                updateSettings({ calendarSystem: selected as CalendarSystem })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="gregorian">Global — Gregorian calendar</SelectItem>
+                <SelectItem value="bikram_sambat">Nepal — Bikram Sambat calendar</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Nepal mode uses Bikram Sambat years and Nepali month names while preserving all stored
+              records and calculations.
+            </p>
+          </div>
         </Panel>
 
         <Panel title="Backup & Restore">

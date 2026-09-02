@@ -64,6 +64,7 @@ import {
   type RevenueMetric,
 } from "@/lib/gym/selectors";
 import type { ActivityType } from "@/lib/gym/types";
+import { formatLongDate } from "@/lib/gym/calendar";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -257,7 +258,7 @@ function Dashboard() {
     <>
       <PageHeader
         title="Dashboard"
-        subtitle={`${state.settings.gymName} · ${new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}`}
+        subtitle={`${state.settings.gymName} · ${formatLongDate(new Date())}`}
         actions={
           <Button asChild variant="secondary">
             <Link to="/reports">View reports</Link>

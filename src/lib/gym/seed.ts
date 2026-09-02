@@ -542,6 +542,7 @@ export function buildSeed(): GymState {
       lowStockAlerts: true,
       expiryReminderDays: 7,
       adminName: "Gym Owner",
+      calendarSystem: "gregorian",
     },
     members,
     plans: PLANS,

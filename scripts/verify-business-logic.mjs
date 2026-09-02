@@ -36,6 +36,7 @@ const vite = await createServer({
 try {
   const store = await vite.ssrLoadModule("/src/lib/gym/store.ts");
   const selectors = await vite.ssrLoadModule("/src/lib/gym/selectors.ts");
+  const calendar = await vite.ssrLoadModule("/src/lib/gym/calendar.ts");
 
   const assertIntegrity = (state) => {
     const unique = (items, label) => {
@@ -91,6 +92,10 @@ try {
   assertIntegrity(state);
   assert(state.expenses.length > 0, "starter data must exercise expense reporting");
   assert.equal(selectors.rangeWindow("monthly").start.getDate(), 1);
+  store.updateSettings({ calendarSystem: "bikram_sambat" });
+  assert.equal(selectors.shortDate(new Date(2026, 8, 2)), "17 Bhadra 2083");
+  assert.equal(calendar.localDateInput(calendar.fromNepaliDate(2083, 4, 17)), "2026-09-02");
+  store.updateSettings({ calendarSystem: "gregorian" });
 
   assert.equal(await store.login("admin@ironvault.gym", "wrong-password"), false);
   assert.equal(await store.login("admin@ironvault.gym", "admin123"), true);

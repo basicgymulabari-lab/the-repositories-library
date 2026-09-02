@@ -187,7 +187,10 @@ export type Settings = {
   expiryReminderDays: number;
   adminName: string;
   revenueCardMetric?: "today" | "weekly" | "monthly" | "yearly" | "total";
+  calendarSystem?: CalendarSystem;
 };
+
+export type CalendarSystem = "gregorian" | "bikram_sambat";
 
 export type GymState = {
   version: number;

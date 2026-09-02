@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from "react";
 import { buildSeed, uid, iso } from "./seed";
+import { configureCalendarSystem } from "./calendar";
 import type {
   Activity,
   ActivityType,
@@ -49,6 +50,7 @@ function init() {
       const parsed = JSON.parse(raw) as GymState;
       if (parsed && parsed.version === 1) {
         state = { ...parsed, expenses: parsed.expenses ?? [] };
+        configureCalendarSystem(state.settings.calendarSystem);
         purgeOldTrash();
         return;
       }
@@ -57,6 +59,7 @@ function init() {
     /* corrupt payload — fall through to a fresh seed */
   }
   state = buildSeed();
+  configureCalendarSystem(state.settings.calendarSystem);
   persist();
 }
 
@@ -64,6 +67,7 @@ function setState(updater: (s: GymState) => GymState) {
   if (!state) init();
   if (!state) return;
   state = updater(state);
+  configureCalendarSystem(state.settings.calendarSystem);
   persist();
   emit();
 }
