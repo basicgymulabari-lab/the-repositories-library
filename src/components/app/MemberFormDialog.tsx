@@ -80,9 +80,17 @@ export function MemberFormDialog({
   const streamRef = useRef<MediaStream | null>(null);
   const cropViewportRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{ x: number; y: number; startX: number; startY: number } | null>(null);
+  const initializedForRef = useRef<string | null>(null);
+  const stepTransitionRef = useRef(false);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      initializedForRef.current = null;
+      return;
+    }
+    const initializationKey = member?.id ?? "new-member";
+    if (initializedForRef.current === initializationKey) return;
+    initializedForRef.current = initializationKey;
     setErrors({});
     setStep(1);
     const firstPlan = state?.plans.find((p) => !p.deletedAt);
@@ -222,6 +230,15 @@ export function MemberFormDialog({
     const e = personalErrors();
     setErrors(e);
     return Object.keys(e).length === 0;
+  };
+
+  const advanceToMembership = () => {
+    if (!validatePersonal()) return;
+    stepTransitionRef.current = true;
+    setStep(2);
+    window.setTimeout(() => {
+      stepTransitionRef.current = false;
+    }, 250);
   };
 
   const validate = () => {
@@ -368,7 +385,7 @@ export function MemberFormDialog({
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!member && step === 1) {
-      if (validatePersonal()) setStep(2);
+      advanceToMembership();
       return;
     }
     if (!validate()) return;
@@ -399,7 +416,13 @@ export function MemberFormDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen && stepTransitionRef.current) return;
+        onOpenChange(nextOpen);
+      }}
+    >
       <DialogContent className="max-h-[92vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-display text-2xl tracking-wide">
@@ -691,12 +714,7 @@ export function MemberFormDialog({
               </Button>
             )}
             {!member && step === 1 ? (
-              <Button
-                type="button"
-                onClick={() => {
-                  if (validatePersonal()) setStep(2);
-                }}
-              >
+              <Button type="button" onClick={advanceToMembership}>
                 Next
               </Button>
             ) : (
