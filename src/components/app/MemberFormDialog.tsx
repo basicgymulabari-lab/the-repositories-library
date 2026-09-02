@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Camera, RotateCw, Upload } from "lucide-react";
+import { CalendarIcon, Camera, RotateCw, Upload } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -13,6 +13,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -69,6 +71,7 @@ export function MemberFormDialog({
   const [form, setForm] = useState<FormState>(empty);
   const [step, setStep] = useState<1 | 2>(1);
   const [membershipStepReady, setMembershipStepReady] = useState(false);
+  const [dobOpen, setDobOpen] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [cameraOpen, setCameraOpen] = useState(false);
   const [cameraError, setCameraError] = useState("");
@@ -165,6 +168,7 @@ export function MemberFormDialog({
     if (!open) {
       setCameraOpen(false);
       setCropSource(null);
+      setDobOpen(false);
       if (stepReadyTimerRef.current !== null) {
         window.clearTimeout(stepReadyTimerRef.current);
         stepReadyTimerRef.current = null;
@@ -192,6 +196,11 @@ export function MemberFormDialog({
   const paidNowNum = Number(form.paidNow || 0);
   const remainingBalance = Math.max(0, finalPrice - (Number.isFinite(paidNowNum) ? paidNowNum : 0));
   const cur = state.settings.currency;
+  const selectedDob = form.dob ? new Date(`${form.dob}T00:00:00`) : undefined;
+  const toDateInput = (date: Date) =>
+    `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
+      date.getDate(),
+    ).padStart(2, "0")}`;
 
   // Live (auto-updating) validation for discount + amount paid.
   let liveDiscountError = "";
@@ -548,11 +557,43 @@ export function MemberFormDialog({
                 </Field>
                 {!editingWalkIn && (
                   <Field label="Date of birth" error={errors.dob}>
-                    <Input
-                      type="date"
-                      value={form.dob}
-                      onChange={(e) => set("dob", e.target.value)}
-                    />
+                    <Popover open={dobOpen} onOpenChange={setDobOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className={`w-full justify-between px-3 font-normal ${
+                            selectedDob ? "text-foreground" : "text-muted-foreground"
+                          }`}
+                        >
+                          {selectedDob
+                            ? selectedDob.toLocaleDateString("en-GB", {
+                                day: "2-digit",
+                                month: "short",
+                                year: "numeric",
+                              })
+                            : "Select date of birth"}
+                          <CalendarIcon className="h-4 w-4 text-gold" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent align="start" className="w-auto border-gold/25 p-0">
+                        <Calendar
+                          mode="single"
+                          selected={selectedDob}
+                          defaultMonth={selectedDob ?? new Date(1995, 0, 1)}
+                          onSelect={(date) => {
+                            if (!date) return;
+                            set("dob", toDateInput(date));
+                            setDobOpen(false);
+                          }}
+                          disabled={{ after: new Date() }}
+                          startMonth={new Date(1920, 0, 1)}
+                          endMonth={new Date()}
+                          captionLayout="dropdown"
+                          className="rounded-xl bg-popover"
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </Field>
                 )}
                 {!editingWalkIn && (
